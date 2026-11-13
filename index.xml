@@ -1393,7 +1393,7 @@ font-style: inherit;">"plot"</span></span>
 </div>
 <p>The top players in the NCAA don’t always turn into top PWHL talent, but maybe those rookies were on a stacked roster, full of veteran players who got more ice time than they did.</p>
 <p>Another way to build an expansion team roster? Transfers from established PWHL teams.</p>
-<p>Looking at returning skaters’ points on the last regular season, versus a translation rate calculated by the average percentage change (n=0.6085942) from NCAA to PWHL rookie season points per game average can help predict what the draft class may contribute to the new expansion teams.</p>
+<p>Looking at returning skaters’ points on the last regular season, versus a translation rate calculated by the average percentage change (0.6085942) from NCAA to PWHL rookie season points per game average can help predict what the draft class may contribute to the new expansion teams.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3083,33 +3083,6 @@ font-style: inherit;">1</span></span></code></pre></div></div>
   <category>code</category>
   <category>analysis</category>
   <guid>https://your-website-url.example.com/posts/post-with-code/</guid>
-  <pubDate>Mon, 02 Nov 2026 06:00:00 GMT</pubDate>
-  <media:content url="https://your-website-url.example.com/posts/post-with-code/image.jpg" medium="image" type="image/jpeg" height="96" width="144"/>
-</item>
-<item>
-  <title>Welcome To My Blog</title>
-  <dc:creator>Tristan O&#39;Malley</dc:creator>
-  <link>https://your-website-url.example.com/posts/welcome/</link>
-  <description><![CDATA[ 
-
-
-
-
-
-<p>This is the first post in a Quarto blog. Welcome!</p>
-<p><img src="https://your-website-url.example.com/posts/welcome/thumbnail.jpg" class="img-fluid"></p>
-<p>Since this post doesn’t specify an explicit <code>image</code>, the first image in the post will be used in the listing page of posts.</p>
-
-
-
- ]]></description>
-  <category>news</category>
-  <guid>https://your-website-url.example.com/posts/welcome/</guid>
-  <pubDate>Fri, 30 Oct 2026 05:00:00 GMT</pubDate>
-</item>
-</channel>
-</rss>
-id>https://your-website-url.example.com/posts/post-with-code/</guid>
   <pubDate>Mon, 02 Nov 2026 06:00:00 GMT</pubDate>
   <media:content url="https://your-website-url.example.com/posts/post-with-code/image.jpg" medium="image" type="image/jpeg" height="96" width="144"/>
 </item>
