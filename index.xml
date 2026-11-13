@@ -10,10 +10,3048 @@
 <atom:link href="https://your-website-url.example.com/index.xml" rel="self" type="application/rss+xml"/>
 <description>A sports data blog</description>
 <generator>quarto-1.11.9</generator>
-<lastBuildDate>Mon, 02 Nov 2026 06:00:00 GMT</lastBuildDate>
+<lastBuildDate>Fri, 13 Nov 2026 06:00:00 GMT</lastBuildDate>
+<item>
+  <title>PWHL Expansion Era; Evaluating and preditcing the strength of new teams</title>
+  <dc:creator>Izzy Lewis</dc:creator>
+  <link>https://your-website-url.example.com/posts/pwhl-expansion-predictions/</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>In its fourth season, the Professional Women’s Hockey League is still growing, in popularity, players and physical presence. This season debuts four new expansion teams: the San Jose Sea Lions, Vegas Vanguards, Detroit Clutch and Hamilton Havoc.</p>
+<p>Since its inaugural season, the PWHL has doubled in size. What started as a league of six nameless teams — first just called by the cities they were in — has since grown to 12 across the United States and Canada.</p>
+<p>After three seasons, no expansion team has claimed the Walter Cup, an honor shared only by two of the original six teams: the Minnesota Frost twice, and most recently, the Montréal Victoire. But of course, as talent shifts and young stars are drafted, perhaps there’s a reckoning to be had in the PWHL.</p>
+<p>As these expansion teams build their rosters with each new draft class — bringing more players into the league — and veterans are traded to new teams, PWHL talent disperses more and more evenly.</p>
+<p>In any sport, draft picks are evaluated by their stats in their current league, but it will never be a one-to-one translation. A top NCAA-scorer isn’t going to stand out as much amongst the ranks of the PWHL.</p>
+<p>In the past three PWHL draft classes, a large majority of the players have come from NCAA play. By evaluating those skaters who have already had a rookie season in the PWHL, it becomes clear whether NCAA offensive output — not in goals, but in points — is a good indicator as to that player’s success in their rookie year with the pros.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(tidyverse)</span>
+<span id="cb1-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(fastRhockey)</span>
+<span id="cb1-3"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(janitor)</span>
+<span id="cb1-4"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(ggrepel)</span></code></pre></div></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1">draftclass26 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Draft Classes - 2026.csv"</span>)</span>
+<span id="cb2-2">draftclass25 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Draft Classes - 2025.csv"</span>)</span>
+<span id="cb2-3">draftclass24 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Draft Classes - 2024.csv"</span>)</span>
+<span id="cb2-4">pwhlbox26 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">load_pwhl_player_box</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2026</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>()</span>
+<span id="cb2-5"></span>
+<span id="cb2-6">cleanncaaskaters26 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> draftclass26 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Previous Team (League)</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"previous_team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"organization"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">organization=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, organization))<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-8">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(organization <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAA"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-9">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#filtering out goalies, only evaluating skaters </span></span>
+<span id="cb2-10">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Team, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"via_team"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#getting rid of "(via Detroit)" and its variations from team column </span></span>
+<span id="cb2-11">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>)</span>
+<span id="cb2-12"></span>
+<span id="cb2-13"></span>
+<span id="cb2-14"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#easy peasy rinse and repeat with '25 draft class, the data looks very similar </span></span>
+<span id="cb2-15">cleanncaaskaters25  <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> draftclass25 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Previous Team (League)</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"previous_team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"organization"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-16">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">organization=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, organization)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-17">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(organization <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAA"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-18">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#filtering out goalies, only evaluating skaters </span></span>
+<span id="cb2-19">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Team, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"via_team"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#getting rid of "(via Detroit)" and its variations from team column</span></span>
+<span id="cb2-20">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-21">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Seattle"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Seattle Torrent"</span>, team), </span>
+<span id="cb2-22">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Vancouver"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Vancouver Goldeneyes"</span>, team), </span>
+<span id="cb2-23">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#changing '25 expansion teams to team name so they match across my draft classes</span></span>
+<span id="cb2-24">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-25">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">last_name=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Van"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Van Wieren"</span>, last_name)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-26">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">last_name=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Gosling"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Nicole Gosling"</span>, last_name))</span>
+<span id="cb2-27"></span>
+<span id="cb2-28"></span>
+<span id="cb2-29"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#'24 draft class looks different from other data, so clean up looks a little different</span></span>
+<span id="cb2-30">cleanncaaskaters24 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> draftclass24 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">PREVIOUS TEAM (LEAGUE)</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"previous_team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"organization"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-31">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">organization=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, organization)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-32">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Round. Pick. (Team)</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"round_pick"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"team"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-33">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, team)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-34">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(team, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"via_team"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" -"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-35">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-36">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NY"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"New York Sirens"</span>, team),</span>
+<span id="cb2-37">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"OTT"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ottawa Charge"</span>, team),</span>
+<span id="cb2-38">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"MIN"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Minnesota Frost"</span>, team),</span>
+<span id="cb2-39">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"BOS"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Boston Fleet"</span>, team), </span>
+<span id="cb2-40">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"MTL"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Montréal Victoire"</span>, team),</span>
+<span id="cb2-41">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"TOR"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Toronto Sceptres"</span>, team)</span>
+<span id="cb2-42">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-43">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span> (<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player=</span>NAME, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Position=</span>POSITION) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-44">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(organization <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAA"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-45">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-46">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-47">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">last_name=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Curl"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Curl-Salemme"</span>, last_name)</span>
+<span id="cb2-48">    ) </span>
+<span id="cb2-49"></span>
+<span id="cb2-50">ncaa2122 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAAWomensScoringLeadersfromCollegeHockeyINC - 2021-22.csv"</span>)</span>
+<span id="cb2-51">ncaa2223 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAAWomensScoringLeadersfromCollegeHockeyINC - 2022-23.csv"</span>)</span>
+<span id="cb2-52">ncaa2324 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAAWomensScoringLeadersfromCollegeHockeyINC - 2023-24.csv"</span>)</span>
+<span id="cb2-53">ncaa2425 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAAWomensScoringLeadersfromCollegeHockeyINC - 2024-25.csv"</span>)</span>
+<span id="cb2-54">ncaa2526 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAAWomensScoringLeadersfromCollegeHockeyINC - 2025-26.csv"</span>)</span>
+<span id="cb2-55"></span>
+<span id="cb2-56"></span>
+<span id="cb2-57">cleanncaa2122 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ncaa2122 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-58">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player =</span> Name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-59">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">season =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"2022"</span>) </span>
+<span id="cb2-60"></span>
+<span id="cb2-61">cleanncaa2223 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ncaa2223 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-62">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player =</span> Name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-63">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">season =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"2023"</span>) </span>
+<span id="cb2-64"></span>
+<span id="cb2-65">cleanncaa2324 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ncaa2324 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-66">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player =</span> Name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-67">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">season =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"2024"</span>)</span>
+<span id="cb2-68"></span>
+<span id="cb2-69">cleanncaa2425 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ncaa2425 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-70">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player =</span> Name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-71">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">season =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"2025"</span>)</span>
+<span id="cb2-72"></span>
+<span id="cb2-73">cleanncaa2526 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ncaa2526 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-74">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Player =</span> Name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-75">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">season =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"2026"</span>) </span>
+<span id="cb2-76"></span>
+<span id="cb2-77">cleanncaa <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(cleanncaa2526, cleanncaa2425, cleanncaa2324, cleanncaa2223, cleanncaa2122) </span>
+<span id="cb2-78"></span>
+<span id="cb2-79">pwhlbox24 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">load_pwhl_player_box</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2024</span>)</span>
+<span id="cb2-80">pwhlbox25 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">load_pwhl_player_box</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2025</span>)</span>
+<span id="cb2-81"></span>
+<span id="cb2-82"></span>
+<span id="cb2-83">rookies26 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Kaltounková"</span>,</span>
+<span id="cb2-84"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Winn"</span>,</span>
+<span id="cb2-85"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"O'Brien"</span>,</span>
+<span id="cb2-86"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Nicole Gosling"</span>,</span>
+<span id="cb2-87"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Guilday"</span>,</span>
+<span id="cb2-88"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Cooper"</span>,</span>
+<span id="cb2-89"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Buglioni"</span>,</span>
+<span id="cb2-90"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Cherkowski"</span>,</span>
+<span id="cb2-91"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Huber"</span>,</span>
+<span id="cb2-92"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Gentry"</span>,</span>
+<span id="cb2-93"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Mlynkova"</span>,</span>
+<span id="cb2-94"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hustler"</span>,</span>
+<span id="cb2-95"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Zanon"</span>,</span>
+<span id="cb2-96"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Webster"</span>,</span>
+<span id="cb2-97"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Mobley"</span>,</span>
+<span id="cb2-98"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Jobst-Smith"</span>,</span>
+<span id="cb2-99"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Irving"</span>,</span>
+<span id="cb2-100"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Wozniewicz"</span>,</span>
+<span id="cb2-101"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Segedi"</span>,</span>
+<span id="cb2-102"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Van Wieren"</span>,</span>
+<span id="cb2-103"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Delianedis"</span>,</span>
+<span id="cb2-104"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ross"</span>,</span>
+<span id="cb2-105"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Brengman"</span>,</span>
+<span id="cb2-106"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Wheeler"</span>,</span>
+<span id="cb2-107"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hemp"</span>,</span>
+<span id="cb2-108"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rinker"</span>,</span>
+<span id="cb2-109"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Habisch"</span>,</span>
+<span id="cb2-110"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Brooks"</span>,</span>
+<span id="cb2-111"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Bargman"</span>,</span>
+<span id="cb2-112"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Newhook"</span>,</span>
+<span id="cb2-113"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Labad"</span>,</span>
+<span id="cb2-114"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Upson"</span>,</span>
+<span id="cb2-115"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Samoskevich"</span>,</span>
+<span id="cb2-116"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Lobdell"</span>,</span>
+<span id="cb2-117"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Baskin"</span>,</span>
+<span id="cb2-118"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Giaquinto"</span>,</span>
+<span id="cb2-119"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Becker"</span>)<span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#'25 draft class</span></span>
+<span id="cb2-120"></span>
+<span id="cb2-121"></span>
+<span id="cb2-122">pwhlpts_gm26 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> pwhlbox26 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-123">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-124">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(last_name <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%in%</span> rookies26) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-125">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-126">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb2-127">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_points =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(points),</span>
+<span id="cb2-128">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_games =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>()</span>
+<span id="cb2-129">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-130">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-131">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">pwhl_pts_gm =</span> total_points<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_games</span>
+<span id="cb2-132">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-133">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(pwhl_pts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> .<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb2-134"></span>
+<span id="cb2-135"></span>
+<span id="cb2-136">rookies25 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Fillier"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Serdachny"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Bilka"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Barnes"</span>,</span>
+<span id="cb2-137"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Gosling"</span>,</span>
+<span id="cb2-138"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Curl-Salemme"</span>,</span>
+<span id="cb2-139"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Gardiner"</span>,</span>
+<span id="cb2-140"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Carter"</span>,</span>
+<span id="cb2-141"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Philips"</span>,</span>
+<span id="cb2-142"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hymlárová"</span>,</span>
+<span id="cb2-143"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Simpson"</span>,</span>
+<span id="cb2-144"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Daniel"</span>,</span>
+<span id="cb2-145"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rosenthal"</span>,</span>
+<span id="cb2-146"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Markowski"</span>,</span>
+<span id="cb2-147"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"McQuigge"</span>,</span>
+<span id="cb2-148"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Bard"</span>,</span>
+<span id="cb2-149"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Greig"</span>,</span>
+<span id="cb2-150"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Bernard"</span>,</span>
+<span id="cb2-151"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hartje"</span>,</span>
+<span id="cb2-152"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"McMahon"</span>,</span>
+<span id="cb2-153"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Petrie"</span>,</span>
+<span id="cb2-154"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Osborne"</span>,</span>
+<span id="cb2-155"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Wilgren"</span>,</span>
+<span id="cb2-156"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Batherson"</span>,</span>
+<span id="cb2-157"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Wethington"</span>,</span>
+<span id="cb2-158"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Knoll"</span>,</span>
+<span id="cb2-159"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hartmetz"</span>,</span>
+<span id="cb2-160"><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Kirk"</span>) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#'24 draft class</span></span>
+<span id="cb2-161"></span>
+<span id="cb2-162">pwhlpts_gm25 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> pwhlbox25 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-163">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-164">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(last_name <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%in%</span> rookies25) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-165">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-166">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb2-167">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_points =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(points),</span>
+<span id="cb2-168">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_games =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>()</span>
+<span id="cb2-169">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-170">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-171">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">pwhl_pts_gm =</span> total_points<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_games</span>
+<span id="cb2-172">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-173">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(pwhl_pts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> .<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb2-174"></span>
+<span id="cb2-175">allpwhlpts_gm <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(pwhlpts_gm25, pwhlpts_gm26)</span>
+<span id="cb2-176"></span>
+<span id="cb2-177"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#ncaa avg pts per game</span></span>
+<span id="cb2-178">rookiesncaa_avg_scoring <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> cleanncaa <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-179">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-180">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-181">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb2-182">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pt_gm =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Pt/Gm</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>),</span>
+<span id="cb2-183">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_seasons =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>()</span>
+<span id="cb2-184">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-185">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb2-186">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">mean_ncaapt_gm =</span> total_pt_gm<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_seasons, </span>
+<span id="cb2-187">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">last_name=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Curl"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Curl-Salemme"</span>, last_name)</span>
+<span id="cb2-188">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-189">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(mean_ncaapt_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> .<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>) </span>
+<span id="cb2-190"></span>
+<span id="cb2-191"></span>
+<span id="cb2-192">rookiepwhl_scatterplot <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> allpwhlpts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb2-193">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">inner_join</span>(rookiesncaa_avg_scoring)</span>
+<span id="cb2-194"></span>
+<span id="cb2-195">topncaascorers <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> rookiepwhl_scatterplot <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(mean_ncaapt_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1.0882250</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> pwhl_pts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)</span>
+<span id="cb2-196"></span>
+<span id="cb2-197"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#scatterplot </span></span>
+<span id="cb2-198"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ggplot</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb2-199">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_point</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>rookiepwhl_scatterplot, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>mean_ncaapt_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>pwhl_pts_gm), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">color=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"grey"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-200">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_point</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>topncaascorers, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>mean_ncaapt_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>pwhl_pts_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">color=</span>last_name)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-201">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">scale_color_manual</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">name=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Top NCAA Scorers"</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">values=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(</span>
+<span id="cb2-202">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#154734"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Bilka on Boston Fleet</span></span>
+<span id="cb2-203">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#A07DC5"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Curl on Minnesota Frost</span></span>
+<span id="cb2-204">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#0067B9"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Daniel on Toronto Sceptres</span></span>
+<span id="cb2-205">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#00b9b3"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Fillier on NY Sirens</span></span>
+<span id="cb2-206">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#0067B9"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Julia Gosling on Toronto Sceptres</span></span>
+<span id="cb2-207">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#00b9b3"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Hartje on NY Sirens</span></span>
+<span id="cb2-208">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#00b9b3"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#O'Brien on NY Sirens</span></span>
+<span id="cb2-209">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#a51b2f"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Serdachny on Ottawa Charge</span></span>
+<span id="cb2-210">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#0067B9"</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#Zanon on Toronto Sceptres</span></span>
+<span id="cb2-211">    )) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-212">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_text_repel</span>(</span>
+<span id="cb2-213">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>topncaascorers, </span>
+<span id="cb2-214">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>mean_ncaapt_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>pwhl_pts_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">label=</span>last_name)</span>
+<span id="cb2-215">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-216">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_smooth</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>rookiepwhl_scatterplot, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>mean_ncaapt_gm, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>pwhl_pts_gm),  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">method=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"lm"</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">se=</span><span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">alpha=</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-217">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">labs</span>(</span>
+<span id="cb2-218">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NCAA Points Per Game"</span>, </span>
+<span id="cb2-219">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rookie PWHL Season Points Per Game"</span>, </span>
+<span id="cb2-220">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">title=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Top NCAA offensive skaters don't always perform in PWHL "</span>, </span>
+<span id="cb2-221">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">subtitle=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Going pro is an adjustment and not every collegiate skater racks up points like they used to."</span>, </span>
+<span id="cb2-222">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">caption=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Source: FastRHockey &amp; College Hockey INC | By Izzy Lewis"</span></span>
+<span id="cb2-223">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-224">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme_minimal</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb2-225">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme</span>(</span>
+<span id="cb2-226">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">18</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">face =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"bold"</span>),</span>
+<span id="cb2-227">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">axis.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>), </span>
+<span id="cb2-228">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.subtitle =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">10</span>), </span>
+<span id="cb2-229">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">panel.grid.minor =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_blank</span>(),</span>
+<span id="cb2-230">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title.position =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"plot"</span></span>
+<span id="cb2-231">    ) </span></code></pre></div></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="https://your-website-url.example.com/posts/pwhl-expansion-predictions/index_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The top players in the NCAA don’t always turn into top PWHL talent, but maybe those rookies were on a stacked roster, full of veteran players who got more ice time than they did.</p>
+<p>Another way to build an expansion team roster? Transfers from established PWHL teams.</p>
+<p>Looking at returning skaters’ points on the last regular season, versus a translation rate calculated by the average percentage change (n=0.6085942) from NCAA to PWHL rookie season points per game average can help predict what the draft class may contribute to the new expansion teams.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1">hiderookiepwhl_scatterplot <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> rookiepwhl_scatterplot <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-2">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb3-3">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_ncaapts =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(mean_ncaapt_gm), </span>
+<span id="cb3-4">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlpts =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(pwhl_pts_gm),</span>
+<span id="cb3-5">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">pct_change =</span> ((total_pwhlpts<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span>total_ncaapts)<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_ncaapts)<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">100</span></span>
+<span id="cb3-6">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>( <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">translation =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mean</span>(pct_change)) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#to calculate a percent change on average for those who were draft picks in '24 and '25 and played a rookie season in the PWHL = -60.85942</span></span>
+<span id="cb3-8"></span>
+<span id="cb3-9"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#cleaning up expansion team rosters</span></span>
+<span id="cb3-10">sj <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLExpansionTeamRostersfromEliteProspects - SanJose.csv"</span>)</span>
+<span id="cb3-11">lv <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLExpansionTeamRostersfromEliteProspects - LasVegas.csv"</span>)</span>
+<span id="cb3-12">ham <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLExpansionTeamRostersfromEliteProspects - Hamilton.csv"</span>)</span>
+<span id="cb3-13">det <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLExpansionTeamRostersfromEliteProspects - Detroit.csv"</span>)</span>
+<span id="cb3-14"></span>
+<span id="cb3-15">sjroster <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> sj <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Player"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Position"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-16">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Position=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, Position)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-17">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#filter out goaltenders </span></span>
+<span id="cb3-18">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Team =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL San Jose"</span>)</span>
+<span id="cb3-19"></span>
+<span id="cb3-20">lvroster <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> lv <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Player"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Position"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-21">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Position=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, Position)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-22">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-23">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Team =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Las Vegas"</span>)</span>
+<span id="cb3-24"></span>
+<span id="cb3-25">hamroster <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> ham <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Player"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Position"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-26">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Position=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, Position)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-27">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>)  <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-28">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Team =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Hamilton"</span>)</span>
+<span id="cb3-29"></span>
+<span id="cb3-30">detroster <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> det <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Player"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Position"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-31">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Position=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>,<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, Position)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-32">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-33">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Team =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Detroit"</span>) </span>
+<span id="cb3-34"></span>
+<span id="cb3-35">expansionteams <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(detroster, hamroster, lvroster, sjroster) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-36">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>)</span>
+<span id="cb3-37"></span>
+<span id="cb3-38">pwhlprepped <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> expansionteams <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-39">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(pwhlbox26) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb3-40">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-41">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name, Team) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb3-42">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb3-43">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlpoints =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(points), </span>
+<span id="cb3-44">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlgames =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>(), </span>
+<span id="cb3-45">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-46">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(total_pwhlgames <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-47">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb3-48">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_pts_gm =</span> total_pwhlpoints<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_pwhlgames, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#for veteran players, simply using what they scored last year</span></span>
+<span id="cb3-49">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">player_type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Veteran"</span></span>
+<span id="cb3-50">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-51">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>()</span>
+<span id="cb3-52"></span>
+<span id="cb3-53">bettercleanncaa2526 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> cleanncaa2526 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-54">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Pos. <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-55">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>)</span>
+<span id="cb3-56"></span>
+<span id="cb3-57">ncaaprepped <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> cleanncaaskaters26 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-58">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(bettercleanncaa2526) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-59">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(first_name, last_name, team, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Pt/Gm</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-60">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb3-61">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_pts_gm =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Pt/Gm</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6085942</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#multiplied by percent change calculated earlier</span></span>
+<span id="cb3-62">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">player_type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Rookie"</span></span>
+<span id="cb3-63">  )</span>
+<span id="cb3-64">  </span>
+<span id="cb3-65"></span>
+<span id="cb3-66">stackedbarchart <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(ncaaprepped, pwhlprepped) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-67">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Las Vegas"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL San Jose"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Hamilton"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Detroit"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-68">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(projected_pts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"NA"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-69">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(team, player_type) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-70">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb3-71">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_projected_pts_gm =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(projected_pts_gm),</span>
+<span id="cb3-72">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> total_projected_pts_gm<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">30</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#multiply for 30 to predict how many points in the 30-game regular season</span></span>
+<span id="cb3-73">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb3-74">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb3-75">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Las Vegas"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Vegas Vanguards"</span>, team), </span>
+<span id="cb3-76">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL San Jose"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"San Jose Sea Lions"</span>, team),</span>
+<span id="cb3-77">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Detroit"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Detroit Clutch"</span>, team),</span>
+<span id="cb3-78">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Hamilton"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hamilton Havoc"</span>, team) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#adding in the newly announced expansion team names!</span></span>
+<span id="cb3-79">  )</span>
+<span id="cb3-80"></span>
+<span id="cb3-81"></span>
+<span id="cb3-82"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ggplot</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb3-83">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_bar</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>stackedbarchart, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">reorder</span>(team, projected_30g_pts), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">weight=</span>projected_30g_pts, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">fill=</span>player_type)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb3-84">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">coord_flip</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb3-85">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">scale_fill_manual</span>(</span>
+<span id="cb3-86">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">name =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Player Status"</span>, </span>
+<span id="cb3-87">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">values =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#7756A9"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#200256"</span>), </span>
+<span id="cb3-88">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">labels =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rookie"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Veteran"</span>)</span>
+<span id="cb3-89">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb3-90">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">labs</span>(</span>
+<span id="cb3-91">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>, </span>
+<span id="cb3-92">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Projected Regular Season Points"</span>, </span>
+<span id="cb3-93">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">title=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"New expansion teams expect differing offensive contribution"</span>, </span>
+<span id="cb3-94">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">subtitle=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Not all 2026-27 expansion are built off of top young talent."</span>, </span>
+<span id="cb3-95">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">caption=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Source: FastRHockey, EliteProspects &amp; PWHL | By Izzy Lewis"</span></span>
+<span id="cb3-96">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb3-97">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme_minimal</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb3-98">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme</span>(</span>
+<span id="cb3-99">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">18</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">face =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"bold"</span>),</span>
+<span id="cb3-100">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">axis.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>), </span>
+<span id="cb3-101">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.subtitle =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">10</span>),</span>
+<span id="cb3-102">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">panel.grid.minor =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_blank</span>(),</span>
+<span id="cb3-103">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title.position =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"plot"</span></span>
+<span id="cb3-104">    ) </span></code></pre></div></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="https://your-website-url.example.com/posts/pwhl-expansion-predictions/index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>San Jose is lowest on scoring, but looks like it will be relying heavily on its rookies. Meanwhile Hamilton, predicted to have the most points, will rely heavily on veterans. It makes sense that a team with more-experienced players would offensively outdo an inexperienced one.</p>
+<p>It gets interesting when the Vanguards, who are fairly balanced between expected veteran and rookie contribution, are predicted to out perform the Clutch, who will be relying more heavily on veterans than any other new expansion team.</p>
+<p>In a league still in its infancy, fresh talent can do a lot of the heavy lifting because everyone is in their early years in the league. The most veteran players only have three PWHL years under their belts.</p>
+<p>Age may be a more accurate gauge on experience levels, indicating how long these women have been playing hockey, even if a dedicated North American women’s professional league has been in limbo. These skaters still could have been playing on national teams and at the Olympics, so the years do matter.</p>
+<p>By evaluating the average projected points based on veterans’ last regular season totals, versus the average player age on each team’s roster, a picture of what teams could dominate this season starts to become clear.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">teamsbyavg_age <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLTeams by AverageAgeHeightWeightfromEliteProspects - 2026-27.csv"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-2">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(team, avg_age)</span>
+<span id="cb4-4"></span>
+<span id="cb4-5">bubbleveterans <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> expansionteams <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-6">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(pwhlbox26) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(Position <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"G"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-8">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name, Team, A) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-9">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-10">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlpoints =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(points), </span>
+<span id="cb4-11">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlgames =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>(), </span>
+<span id="cb4-12">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-13">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(total_pwhlgames <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-14">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-15">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_pts_gm =</span> total_pwhlpoints<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_pwhlgames, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#for veteran players, simply using what they scored last year</span></span>
+<span id="cb4-16">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">draft_potential =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#only applies to draft class not veteran players</span></span>
+<span id="cb4-17">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-18">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>() </span>
+<span id="cb4-19"></span>
+<span id="cb4-20"></span>
+<span id="cb4-21">nccapreppedbubble <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> cleanncaaskaters26 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-22">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(bettercleanncaa2526) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-23">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-24">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_pts_gm =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#not applying to draft class that hasn't played in pro games</span></span>
+<span id="cb4-25">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">draft_potential =</span> (<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Pt/Gm</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6085942</span>)<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">30</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#for 30 regular season games</span></span>
+<span id="cb4-26">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-27">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(first_name, last_name, draft_potential, projected_pts_gm)</span>
+<span id="cb4-28"></span>
+<span id="cb4-29">bubblerookies <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> expansionteams <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-30">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(nccapreppedbubble) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-31">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>()</span>
+<span id="cb4-32"></span>
+<span id="cb4-33">bubble <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(bubblerookies, bubbleveterans) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-34">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(draft_potential <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> projected_pts_gm <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-35">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(team) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-36">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-37">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_projected_pts_gm =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(projected_pts_gm),</span>
+<span id="cb4-38">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_draft_potential =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">as.numeric</span>(draft_potential)),</span>
+<span id="cb4-39">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> total_projected_pts_gm<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">30</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#multiply for 30 to predict how many points in the 30-game regular season</span></span>
+<span id="cb4-40">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-41">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-42">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Las Vegas"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Vegas Vanguards"</span>, team), </span>
+<span id="cb4-43">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL San Jose"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"San Jose Sea Lions"</span>, team),</span>
+<span id="cb4-44">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Detroit"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Detroit Clutch"</span>, team),</span>
+<span id="cb4-45">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">gsub</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHL Hamilton"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hamilton Havoc"</span>, team) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#adding in the newly announced expansion team names </span></span>
+<span id="cb4-46">   ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-47">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(teamsbyavg_age)</span>
+<span id="cb4-48"></span>
+<span id="cb4-49">pwhl2026teams <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Boston Fleet"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Minnesota Frost"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Montréal Victoire"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"New York Sirens"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ottawa Charge"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Seattle Torrent"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Toronto Sceptres"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Vancouver Goldeneyes"</span>)</span>
+<span id="cb4-50"></span>
+<span id="cb4-51">originalsix <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Boston Fleet"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Minnesota Frost"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Montréal Victoire"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"New York Sirens"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ottawa Charge"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Toronto Sceptres"</span>)</span>
+<span id="cb4-52"></span>
+<span id="cb4-53">pwhlrosters2027 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">read_csv</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PWHLfromEliteProspects - AllTeams.csv"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-54">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(Player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"player"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"position"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">("</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-55">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">separate</span>(player, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">into=</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"first_name"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"last_name"</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sep=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">" "</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-56">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">rename</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">team =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"...2"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-57">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%in%</span> pwhl2026teams) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-58">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(first_name, last_name, team)</span>
+<span id="cb4-59"></span>
+<span id="cb4-60">veteransonnonexpansionteams <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> pwhlrosters2027 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-61">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(pwhlbox26) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-62">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name, team) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-63">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-64">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlpoints =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(points), </span>
+<span id="cb4-65">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_pwhlgames =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">n</span>(), </span>
+<span id="cb4-66">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-67">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(total_pwhlpoints) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-68">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(total_pwhlgames <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-69">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-70">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">pts_gm =</span> total_pwhlpoints<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>total_pwhlgames, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#for veteran players, simply using what they scored last year</span></span>
+<span id="cb4-71">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">draft_potential =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#only applies to draft class not veteran players</span></span>
+<span id="cb4-72">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-73">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>() </span>
+<span id="cb4-74"></span>
+<span id="cb4-75">pwhlnonexpansion2027 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> pwhlrosters2027 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-76">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(veteransonnonexpansionteams) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-77">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Hamilton Havoc"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Detroit Clutch"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"San Jose Sea Lions"</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Vegas Vanguards"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-78">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-79">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> pts_gm<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">30</span></span>
+<span id="cb4-80">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-81">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">clean_names</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-82">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(first_name, last_name, team) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-83">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-84">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(projected_30g_pts)</span>
+<span id="cb4-85">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-86">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-87">     <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">draft_potential =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span></span>
+<span id="cb4-88">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-89">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(projected_30g_pts) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-90">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(team, projected_30g_pts, first_name, last_name, draft_potential)</span>
+<span id="cb4-91"></span>
+<span id="cb4-92">nonexpansionteams_draftbubble <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> cleanncaaskaters26 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-93">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(bettercleanncaa2526) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-94">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb4-95">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">draft_potential =</span> (<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">Pt/Gm</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">`</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6085942</span>)<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">30</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#for 30 regular season games</span></span>
+<span id="cb4-96">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span></span>
+<span id="cb4-97">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-98">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(first_name, last_name, draft_potential, team, projected_30g_pts) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-99">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%in%</span> pwhl2026teams) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-100">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(draft_potential <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>) </span>
+<span id="cb4-101"></span>
+<span id="cb4-102">pwhl2026_bubble <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(nonexpansionteams_draftbubble, pwhlnonexpansion2027) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb4-103">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">group_by</span>(team) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-104">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-105">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">projected_30g_pts =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(projected_30g_pts),</span>
+<span id="cb4-106">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">total_draft_potential =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(draft_potential)</span>
+<span id="cb4-107">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-108">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">left_join</span>(teamsbyavg_age)</span>
+<span id="cb4-109"></span>
+<span id="cb4-110">hide_xy_intercepts <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">bind_rows</span>(pwhl2026_bubble, bubble) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb4-111">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summarize</span>(</span>
+<span id="cb4-112">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">ptline =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mean</span>(projected_30g_pts), </span>
+<span id="cb4-113">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">ageline =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mean</span>(avg_age)</span>
+<span id="cb4-114">    ) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#caclulating x &amp; y intercepts of means</span></span>
+<span id="cb4-115"></span>
+<span id="cb4-116">originalsixbubble <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> pwhl2026_bubble <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(team <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%in%</span> originalsix)</span>
+<span id="cb4-117"></span>
+<span id="cb4-118"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ggplot</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb4-119">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_point</span>(</span>
+<span id="cb4-120">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>bubble, </span>
+<span id="cb4-121">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>projected_30g_pts, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>avg_age, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span>total_draft_potential, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">color=</span>team),</span>
+<span id="cb4-122">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">alpha =</span> .<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">7</span></span>
+<span id="cb4-123">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb4-124">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">scale_color_manual</span>(</span>
+<span id="cb4-125">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">name =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Expansion Teams"</span>, </span>
+<span id="cb4-126">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">values =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#C02B2D"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#detroit</span></span>
+<span id="cb4-127">               <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#F1A40E"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#hamilton</span></span>
+<span id="cb4-128">               <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#006D75"</span>, <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#san jose</span></span>
+<span id="cb4-129">               <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#717237"</span> <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#vegas</span></span>
+<span id="cb4-130">               )</span>
+<span id="cb4-131">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-132">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_point</span>(</span>
+<span id="cb4-133">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>pwhl2026_bubble, </span>
+<span id="cb4-134">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>projected_30g_pts, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>avg_age, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span>total_draft_potential),</span>
+<span id="cb4-135">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">alpha =</span> .<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb4-136">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">scale_size</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">range =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">name=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Points by Rookies"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-137">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_vline</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">xintercept =</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">109.8979</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">alpha=</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> </span>
+<span id="cb4-138">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_hline</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">yintercept =</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">26.61</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">alpha=</span>.<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-139">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_text_repel</span>(</span>
+<span id="cb4-140">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">data=</span>originalsixbubble, </span>
+<span id="cb4-141">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span>projected_30g_pts, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span>avg_age, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">label=</span>team),</span>
+<span id="cb4-142">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2.75</span></span>
+<span id="cb4-143">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-144">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">labs</span>(</span>
+<span id="cb4-145">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">x=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Projected Season Points"</span>, </span>
+<span id="cb4-146">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">y=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Average Age"</span>, </span>
+<span id="cb4-147">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">title=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Predicting the top PWHL in year four"</span>, </span>
+<span id="cb4-148">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">subtitle=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Contribution from experienced players matters, but maybe these kids will surprise us."</span>, </span>
+<span id="cb4-149">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">caption=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Source: FastRHockey, EliteProspects &amp; College Hockey INC | By Izzy Lewis"</span></span>
+<span id="cb4-150">    ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-151">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme_minimal</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb4-152">   <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme</span>(</span>
+<span id="cb4-153">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">18</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">face =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"bold"</span>),</span>
+<span id="cb4-154">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">axis.title =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>), </span>
+<span id="cb4-155">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.subtitle =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_text</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">size=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">10</span>),</span>
+<span id="cb4-156">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">panel.grid.minor =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">element_blank</span>(),</span>
+<span id="cb4-157">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">plot.title.position =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"plot"</span></span>
+<span id="cb4-158">    ) </span></code></pre></div></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="https://your-website-url.example.com/posts/pwhl-expansion-predictions/index_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Total draft potential, calculated using the earlier percentage change translation rate, weights each team on its possible output from rookies who played in the NCAA. The lines show the average age and average projected season points across the 12 teams.</p>
+<p>San Jose and Vegas trend young and low on offensive output, relying heavily on their rookies, so while they may not see success this season, they have great potential from the draft class and, as they develop players, they could start to have success.</p>
+<p>Hamilton falls in the middle of the pack, fairly average, and may see success in securing one of those eight coveted playoff spots. Detroit is older than and outperforming the other new expansions, clearly relying on those veterans. In this model, without the rookie’s projected points contributing to the projected points total, it completely shifts in the ranking. However, the Clutch have some of the lowest potential from its rookies league-wide.</p>
+<p>It’s also easy to see why Montréal had a crazy regular season that it clearly carried into playoffs, and it’s eventually hoisting the Walter Cup. The Victoire have the oldest, most experienced roster and rack up those points like no other. It will continue to rely on its veterans next season.</p>
+<p>Out of the original six teams — each labeled on the chart — Toronto is the only one lacking. It’s older, more experienced, but also has one of the bigger expected points by rookies. After a rough season, getting the younger women to contribute offensively may boost them up the ranks.</p>
+
+
+
+ ]]></description>
+  <category>hockey</category>
+  <category>pwhl</category>
+  <category>expansionteams</category>
+  <guid>https://your-website-url.example.com/posts/pwhl-expansion-predictions/</guid>
+  <pubDate>Fri, 13 Nov 2026 06:00:00 GMT</pubDate>
+  <media:content url="https://your-website-url.example.com/posts/pwhl-expansion-predictions/image.png" medium="image" type="image/png" height="104" width="144"/>
+</item>
 <item>
   <title>Post With Code</title>
-  <dc:creator>Harlow Malloc</dc:creator>
+  <dc:creator>Izzy Lewis</dc:creator>
   <link>https://your-website-url.example.com/posts/post-with-code/</link>
   <description><![CDATA[ 
 
@@ -23,6 +3061,8 @@
 
 <p>This is a post with executable code.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">1</span> <span class="sc" style="color: #5E5E5E;
@@ -30,6 +3070,7 @@ background-color: null;
 font-style: inherit;">+</span> <span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">1</span></span></code></pre></div></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2</code></pre>
 </div>
